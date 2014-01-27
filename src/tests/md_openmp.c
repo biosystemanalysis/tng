@@ -69,8 +69,8 @@ int main ()
     int i;
     double kinetic;
     double mass = 1.0;
-    int nd = 3;
-    int np = 50;
+    int nd = 3; // number of dimensions
+    int np = 50; // number of particles
     double *pos;
     double potential;
     int proc_num;
@@ -91,7 +91,7 @@ int main ()
     tng_atom_t atom;
     int64_t n_frames_per_frame_set;
     int frames_saved_cnt = 0;
-
+    int64_t codec_id = TNG_UNCOMPRESSED;
     timestamp ( );
 
     proc_num = omp_get_num_procs ( );
@@ -133,15 +133,24 @@ int main ()
 
     /* Set molecules data */
     printf("  Creating molecules in trajectory.\n");
+
+                         // name, *molecule
     tng_molecule_add(traj, "water", &molecule);
+
+                              // molecule, name, *chain
     tng_molecule_chain_add(traj, molecule, "W", &chain);
+
+                             // chain, name, residue
     tng_chain_residue_add(traj, chain, "WAT", &residue);
-    if(tng_residue_atom_add(traj, residue, "O", "O", &atom) == TNG_CRITICAL)
+
+                                         //atom name,atom type, *atom
+    if(tng_residue_atom_add(traj, residue, "O",     "O", &atom) == TNG_CRITICAL)
     {
         tng_trajectory_destroy(&traj);
         printf("  Cannot create molecules.\n");
         exit(1);
     }
+    						// molecule, number of particles
     tng_molecule_cnt_set(traj, molecule, np);
 
 
@@ -152,17 +161,20 @@ int main ()
     {
         box_shape[i] = 0.0;
     }
+              // number of dimensions
     for ( i = 0; i < nd; i++ )
     {
         box[i] = 10.0;
         box_shape[i*nd + i] = box[i];
     }
 
+    // box_shape = { 10.0 0.00 0.00 10.0 0.00 0.00 10.0 0.00 0.00 }
+    // i don't know (yet), what the zeroes are for
 
     /* Add the box shape data block and write the file headers */
-    if(tng_data_block_add(traj, TNG_TRAJ_BOX_SHAPE, "BOX SHAPE", TNG_DOUBLE_DATA,
-                       TNG_NON_TRAJECTORY_BLOCK, 1, 9, 1, TNG_UNCOMPRESSED,
-                       box_shape) == TNG_CRITICAL ||
+                        //handle, id,                 name,        datatype, 	   block_type_flag,          number of frames, values per frame, stride_length, codec_id  ,       data
+    if(tng_data_block_add(traj,   TNG_TRAJ_BOX_SHAPE, "BOX SHAPE", TNG_DOUBLE_DATA,TNG_NON_TRAJECTORY_BLOCK, 1,                9,                1,             codec_id, box_shape) == TNG_CRITICAL ||
+    										// handle, hash_mode
                        tng_file_headers_write(traj, TNG_USE_HASH) == TNG_CRITICAL)
     {
         free(box_shape);
@@ -201,8 +213,7 @@ int main ()
         Compute forces and energies,
         Update positions, velocities, accelerations.
 */
-    printf("  Every %d steps particle positions, velocities and forces are\n",
-           step_save);
+    printf("  Every %d steps particle positions, velocities and forces are\n", step_save);
     printf("  saved to a TNG trajectory file.\n");
     printf ( "\n" );
     printf ( "  At certain step intervals, we report the potential and kinetic energies.\n" );
@@ -215,53 +226,30 @@ int main ()
     printf ( "\n" );
 
     step = 0;
-    printf ( "  %8d  %14f  %14f  %14e\n",
-        step, potential, kinetic, ( potential + kinetic - e0 ) / e0 );
+    printf ( "  %8d  %14f  %14f  %14e\n", step, potential, kinetic, ( potential + kinetic - e0 ) / e0 );
     step_print_index++;
     step_print = ( step_print_index * step_num ) / step_print_num;
 
     /* Create a frame set for writing data */
     tng_num_frames_per_frame_set_get(traj, &n_frames_per_frame_set);
-    if(tng_frame_set_new(traj, 0,
-        n_frames_per_frame_set) != TNG_SUCCESS)
+    if(tng_frame_set_new(traj, 0, n_frames_per_frame_set) != TNG_SUCCESS)
     {
-        printf("Error creating frame set %d. %s: %d\n",
-                i, __FILE__, __LINE__);
+        printf("Error creating frame set %d. %s: %d\n", i, __FILE__, __LINE__);
         exit(1);
     }
 
     /* Add empty data blocks */
-    if(tng_particle_data_block_add(traj, TNG_TRAJ_POSITIONS,
-                                "POSITIONS",
-                                TNG_DOUBLE_DATA,
-                                TNG_TRAJECTORY_BLOCK,
-                                n_frames_per_frame_set, 3,
-                                1, 0, np,
-                                TNG_UNCOMPRESSED,
-                                0) != TNG_SUCCESS)
+    if(tng_particle_data_block_add(traj, TNG_TRAJ_POSITIONS, "POSITIONS", TNG_DOUBLE_DATA, TNG_TRAJECTORY_BLOCK, n_frames_per_frame_set, 3, 1, 0, np, codec_id, 0) != TNG_SUCCESS)
     {
         printf("Error adding data. %s: %d\n", __FILE__, __LINE__);
         exit(1);
     }
-    if(tng_particle_data_block_add(traj, TNG_TRAJ_VELOCITIES,
-                                "VELOCITIES",
-                                TNG_DOUBLE_DATA,
-                                TNG_TRAJECTORY_BLOCK,
-                                n_frames_per_frame_set, 3,
-                                1, 0, np,
-                                TNG_UNCOMPRESSED,
-                                0) != TNG_SUCCESS)
+    if(tng_particle_data_block_add(traj, TNG_TRAJ_VELOCITIES, "VELOCITIES", TNG_DOUBLE_DATA, TNG_TRAJECTORY_BLOCK, n_frames_per_frame_set, 3, 1, 0, np, codec_id, 0) != TNG_SUCCESS)
     {
         printf("Error adding data. %s: %d\n", __FILE__, __LINE__);
         exit(1);
     }
-    if(tng_particle_data_block_add(traj, TNG_TRAJ_FORCES,
-                                "FORCES",
-                                TNG_DOUBLE_DATA,
-                                TNG_TRAJECTORY_BLOCK,
-                                n_frames_per_frame_set, 3,
-                                1, 0, np,
-                                TNG_UNCOMPRESSED, 0) != TNG_SUCCESS)
+    if(tng_particle_data_block_add(traj, TNG_TRAJ_FORCES,"FORCES",TNG_DOUBLE_DATA,TNG_TRAJECTORY_BLOCK,n_frames_per_frame_set, 3, 1, 0, np, codec_id, 0) != TNG_SUCCESS)
     {
         printf("Error adding data. %s: %d\n", __FILE__, __LINE__);
         exit(1);
@@ -270,13 +258,7 @@ int main ()
     /* There is no standard ID for potential energy. Pick one. The
        potential energy will not be saved every frame - it is sparsely
        saved. */
-    if(tng_data_block_add(traj, 10101,
-                          "POTENTIAL ENERGY",
-                          TNG_DOUBLE_DATA,
-                          TNG_TRAJECTORY_BLOCK,
-                          n_frames_per_frame_set, 1,
-                          sparse_save, TNG_UNCOMPRESSED,
-                          0) != TNG_SUCCESS)
+    if(tng_data_block_add(traj, 10101, "POTENTIAL ENERGY", TNG_DOUBLE_DATA, TNG_TRAJECTORY_BLOCK, n_frames_per_frame_set, 1, sparse_save, codec_id, 0) != TNG_SUCCESS)
     {
         printf("Error adding data. %s: %d\n", __FILE__, __LINE__);
         exit(1);
@@ -359,8 +341,7 @@ int main ()
             }
             if(step % (step_save * sparse_save) == 0)
             {
-                if(tng_frame_data_write(traj, frames_saved_cnt, 10101, &potential,
-                                     TNG_USE_HASH) != TNG_SUCCESS)
+                if(tng_frame_data_write(traj, frames_saved_cnt, 10101, &potential,TNG_USE_HASH) != TNG_SUCCESS)
                 {
                     printf("Error adding data. %s: %d\n", __FILE__, __LINE__);
                     exit(1);

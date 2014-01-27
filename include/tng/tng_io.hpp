@@ -53,7 +53,7 @@ public:
     Trajectory(Trajectory * src)
     { status = tng_trajectory_init_from_src(traj,&src->traj); }
 
-    //! Detructor
+    //! Destructor
     ~Trajectory()
     { status = tng_trajectory_destroy(&traj); }
 

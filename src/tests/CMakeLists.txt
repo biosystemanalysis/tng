@@ -29,12 +29,17 @@ if(TNG_BUILD_EXAMPLES)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
         add_executable(md_openmp md_openmp.c)
+        add_executable(sr_test sr_test.c)
         target_link_libraries(md_openmp tng_io ${OpenMP_LIBS})
+        target_link_libraries(sr_test tng_io ${OpenMP_LIBS})
         if(UNIX)
             target_link_libraries(md_openmp m)
+            target_link_libraries(sr_test m)
         endif()
         set_property(TARGET md_openmp PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/examples)
         set_property(TARGET md_openmp APPEND PROPERTY COMPILE_DEFINITIONS TNG_BUILD_OPENMP_EXAMPLES)
+        set_property(TARGET sr_test PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/examples)
+        set_property(TARGET sr_test APPEND PROPERTY COMPILE_DEFINITIONS TNG_BUILD_OPENMP_EXAMPLES)
 
 
         add_executable(md_openmp_util md_openmp_util.c)

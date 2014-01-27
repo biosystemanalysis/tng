@@ -31,8 +31,39 @@ tng_get_source_list(TNG_SOURCES TNG_COMPILE_DEFS)
 
 tng_set_source_properties(WITH_ZLIB ${ZLIB_FOUND})
 
-add_library(tng_io ${TNG_SOURCES})
+SET( hrtc_object_files
+  src/compression/hrtc/hrtc_wrapper.o
+  src/compression/hrtc/integer_encoding_library/src/compress/VSE-R.o
+  src/compression/hrtc/integer_encoding_library/src/compress/VSEncodingBlocksHybrind.o
+  src/compression/hrtc/integer_encoding_library/src/compress/VSEncodingSimple.o
+  src/compression/hrtc/integer_encoding_library/src/compress/Simple16.o
+  src/compression/hrtc/integer_encoding_library/src/compress/VSEncodingRest.o
+  src/compression/hrtc/integer_encoding_library/src/compress/PForDelta.o
+  src/compression/hrtc/integer_encoding_library/src/compress/VSEncodingBlocks.o
+  src/compression/hrtc/integer_encoding_library/src/compress/VariableByte.o
+  src/compression/hrtc/integer_encoding_library/src/compress/table/decGamma.o
+  src/compression/hrtc/integer_encoding_library/src/compress/table/decUnary.o
+  src/compression/hrtc/integer_encoding_library/src/compress/table/decDelta.o
+  src/compression/hrtc/integer_encoding_library/src/compress/VSEncodingNaive.o
+  src/compression/hrtc/integer_encoding_library/src/compress/VSEncodingDP.o
+  src/compression/hrtc/integer_encoding_library/src/compress/Simple9.o
+  src/compression/hrtc/integer_encoding_library/src/compress/OPTPForDelta.o
+  src/compression/hrtc/integer_encoding_library/src/interger_encoding.o
+  src/compression/hrtc/integer_encoding_library/src/io/BitsWriter.o
+  src/compression/hrtc/integer_encoding_library/src/io/BitsReader.o
+)
 
+SET_SOURCE_FILES_PROPERTIES(
+  ${hrtc_object_files}
+  PROPERTIES
+  EXTERNAL_OBJECT true
+  # to say that "this is actually an object file, so it should not be compiled, only linked"
+  # GENERATED true
+  # to say that "it is OK that the obj-files do not exist before build time"
+)
+
+add_library(tng_io ${TNG_SOURCES} ${hrtc_object_files})
+ 
 if (ZLIB_FOUND)
   list(APPEND EXTRA_LIBRARIES ${ZLIB_LIBRARIES})
   include_directories(${ZLIB_INCLUDE_DIRS})
@@ -41,6 +72,8 @@ endif()
 if (UNIX)
   list(APPEND EXTRA_LIBRARIES m)
 endif()
+  
+list(APPEND EXTRA_LIBRARIES stdc++)
 
 target_link_libraries(tng_io ${EXTRA_LIBRARIES})
 

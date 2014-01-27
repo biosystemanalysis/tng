@@ -399,7 +399,8 @@ typedef enum {TNG_BIG_ENDIAN_64,
 typedef enum {TNG_UNCOMPRESSED,
               TNG_XTC_COMPRESSION,
               TNG_TNG_COMPRESSION,
-              TNG_GZIP_COMPRESSION} tng_compression;
+              TNG_GZIP_COMPRESSION,
+              TNG_HRTC_COMPRESSION} tng_compression;
 
 /** Hash types */
 typedef enum {TNG_NO_HASH,
@@ -407,7 +408,8 @@ typedef enum {TNG_NO_HASH,
               TNG_SHA256} tng_hash_type;
 
 /** Non trajectory blocks come before the first frame set block */
-typedef enum {TNG_NON_TRAJECTORY_BLOCK, TNG_TRAJECTORY_BLOCK} tng_block_type;
+typedef enum {TNG_NON_TRAJECTORY_BLOCK,
+              TNG_TRAJECTORY_BLOCK} tng_block_type;
 
 /** @defgroup def1 Standard non-trajectory blocks
  *  Block IDs of standard non-trajectory blocks.
